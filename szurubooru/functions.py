@@ -21,10 +21,9 @@ from classes import *
 from base64 import b64encode
 from json import load
 
-API_URL = "https://gallery.keetydraws.com/api"
-
-with open("TOKEN.json") as f:
+with open("config.json") as f:
 	f_json = load(f)
+	API_URL = f_json["API_URL"]
 	TOKEN = b64encode(bytes(f_json["TOKEN"], "utf-8")).decode("utf-8")
 
 headers: dict = {"Authorization": f"Token {TOKEN}", "Content-Type": "application/json", "Accept": "application/json"}
