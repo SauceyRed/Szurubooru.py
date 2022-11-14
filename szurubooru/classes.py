@@ -17,7 +17,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import requests
 
-from functions import API_URL, TOKEN, headers
+from .auth import *
+
+def _updateAuth():
+	global API_URL, HEADERS
+	API_URL, HEADERS = getAuth()
 
 class User:
 	def __init__(self, version, name, email, rank, last_login_time, creation_time, avatar_style, avatar_url, comment_count, uploaded_post_count,
@@ -61,6 +65,40 @@ class TagCategory:
 		self.usages = usages
 		self.order = order
 		self.default = default
+
+	@classmethod
+	def from_json(cls, json):
+		return TagCategory(json["version"], json["name"], json["color"], json["usages"], json["order"], json["default"])
+
+	def to_json(self):
+		return {
+			"version": self.version, "name": self.name, "color": self.color, "usages": self.usages,
+			"order": self.order, "default": self.default
+		}
+
+	_updateAuth()
+
+	def update(self, name, color, order):
+		post_r = requests.put(API_URL + "/tag-category/" + self.name, json={"version": self.version, "name": name,
+																			"color": color, "order": order},
+																			headers=HEADERS)
+		post_r.raise_for_status()
+		return print(f"Updated tag with ID {self.id}")
+
+	def rename(self, name):
+		post_r = requests.put(API_URL + "/tag-category/" + self.name, json={"version": self.version, "name": name,
+																			"color": self.color, "order": self.order},
+																			headers=HEADERS)
+
+	def changeColor(self, color):
+		post_r = requests.put(API_URL + "/tag-category/" + self.name, json={"vesrion": self.version, "name": self.name,
+																			"color": color, "order": self.order},
+																			headers=HEADERS)
+
+	def changeOrder(self, order):
+		post_r = requests.put(API_URL + "/tag-category/" + self.name, json={"version": self.version, "name": self.name,
+																			"color": self.color, "order": order},
+																			headers=HEADERS)
 
 class Tag:
 	def __init__(self, version, names, category, implications, suggestions, creation_time, last_edit_time, usages, description):
@@ -128,7 +166,6 @@ class Post:
 					json["featureCount"], json["relationCount"], json["lastFeatureTime"], json["favoritedBy"], json["hasCustomThumbnail"],
 					json["mimeType"], json["comments"], json["pools"])
 
-	@classmethod
 	def to_json(self):
 		return {
 			"version": self.version, "id": self.id, "creationTime": self.creation_time, "lastEditTime": self.last_edit_time,
@@ -140,82 +177,75 @@ class Post:
 			"lastFeatureTime": self.last_feature_time, "favoritedBy": self.favorited_by, "hasCustomThumbnail": self.has_custom_thumbnail,
 			"mimeType": self.mime_type, "comments": self.comments, "pools": self.pools
 		}
-
-	def create(self, anonymous=False):
-		post_r = requests.post(API_URL + f"/posts/", json={"tags": self.tags, "safety": self.safety, "source": self.source,
-														"relations": self.relations, "notes": self.notes, "flags": self.flags,
-														"anonymous": anonymous}, headers=headers)
-		post_r_json = post_r.json()
-		post_r.raise_for_status()
-		return print(f"Created post with ID {post_r_json['id']}")
 	
-	def update(self):
-		post_r = requests.put(API_URL + f"/posts/", json={"version": self.version, "tags": self.tags,
-														"safety": self.safety, "source": self.source, "relations": self.relations,
-														"notes": self.notes, "flags": self.flags}, headers=headers)
-		post_r_json = post_r.json()
+	_updateAuth()
+
+	def update(self, tags, safety, source, relations, notes, flags):
+		post_r = requests.put(API_URL + f"/posts/", json={"version": self.version, "tags": tags,
+														"safety": safety, "source": source, "relations": relations,
+														"notes": notes, "flags": flags}, headers=HEADERS)
 		post_r.raise_for_status()
-		return print(f"Created post with ID {post_r_json['id']}")
+		return print(f"Updated post with ID {self.id}")
 
 	def getPreviousPost(self):
-		post_r = requests.get(API_URL + f"/post/{self.id}/around", headers=headers)
+		post_r = requests.get(API_URL + f"/post/{self.id}/around", headers=HEADERS)
 		post_r_json = post_r.json()
 		post_r.raise_for_status()
 		prev_post = post_r_json["prev"]
 		return prev_post
 
 	def getNextPost(self):
-		post_r = requests.get(API_URL + f"/post/{self.id}/around", headers=headers)
+		post_r = requests.get(API_URL + f"/post/{self.id}/around", headers=HEADERS)
 		post_r_json = post_r.json()
 		post_r.raise_for_status()
 		next_post = post_r_json["next"]
 		return next_post
 
 	def delete(self):
-		post_r = requests.delete(API_URL + f"/post/{self.id}", json={"version": self.version}, headers=headers)
+		post_r = requests.delete(API_URL + f"/post/{self.id}", json={"version": self.version}, headers=HEADERS)
 		post_r_json = post_r.json()
 		post_r.raise_for_status()
-		return print(f"Created post with ID {post_r_json['id']}")
+		return print(f"Deleted post with ID {post_r_json['id']}")
 
 	def merge(self, target_post, replace_content):
 		post_r = requests.post(API_URL + f"/post-merge/", json={"removeVersion": self.version, "remove": self.id,
 																"mergeToVersion": target_post.version, "mergeTo": target_post.id,
-																"replaceContent": replace_content}, headers=headers)
+																"replaceContent": replace_content}, headers=HEADERS)
 		post_r.raise_for_status()
 		return print(f"Merged posts with IDs {self.id} and {target_post.id}")
 
 	def like(self):
 		if self.own_score == 1: return print(f"Post with ID {self.id} is already liked!")
-		post_r = requests.put(API_URL + f"/post/{self.id}/score", json={"score": 1}, headers=headers)
+		post_r = requests.put(API_URL + f"/post/{self.id}/score", json={"score": 1}, headers=HEADERS)
 		post_r.raise_for_status()
 		return print(f"Liked post with ID {self.id}")
 	
 	def dislike(self):
 		if self.own_score == 1: return print(f"Post with ID {self.id} is already disliked!")
-		post_r = requests.put(API_URL + f"/post/{self.id}/score", json={"score": -1}, headers=headers)
+		post_r = requests.put(API_URL + f"/post/{self.id}/score", json={"score": -1}, headers=HEADERS)
 		post_r.raise_for_status()
 		return print(f"Disliked post with ID {self.id}")
 	
 	def reset_rating(self):
 		if self.own_score == 1: return print(f"Post with ID {self.id} has not been liked or disliked by you!")
-		post_r = requests.put(API_URL + f"/post/{self.id}/score", json={"score": 0}, headers=headers)
+		post_r = requests.put(API_URL + f"/post/{self.id}/score", json={"score": 0}, headers=HEADERS)
 		post_r.raise_for_status()
 		return print(f"Reset rating on post with ID {self.id}")
 	
 	def favorite(self):
 		if self.own_favorite: return print(f"Post with ID {self.id} is already favorited!")
-		post_r = requests.post(API_URL + f"/post/{self.id}/favorite", headers=headers)
+		post_r = requests.post(API_URL + f"/post/{self.id}/favorite", headers=HEADERS)
 		post_r.raise_for_status()
 		return print(f"Favorited post with ID {self.id}")
 
 	def unfavorite(self):
 		if self.own_favorite: return print(f"Post with ID {self.id} is not favorited!")
-		post_r = requests.delete(API_URL + f"/post/{self.id}/favorite", headers=headers)
+		post_r = requests.delete(API_URL + f"/post/{self.id}/favorite", headers=HEADERS)
 		post_r.raise_for_status()
 		return print(f"Unfavorited post with ID {self.id}")
 
 	def feature(self):
-		post_r = requests.post(API_URL + f"/featured-post", json={"id": self.id}, headers=headers)
+		post_r = requests.post(API_URL + f"/featured-post", json={"id": self.id}, headers=HEADERS)
 		post_r.raise_for_status()
 		return print(f"Featured post with ID {self.id}")
 

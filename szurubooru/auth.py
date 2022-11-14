@@ -15,6 +15,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from .classes import *
-from .functions import *
-from .auth import *
+from base64 import b64encode
+
+_api_url = ""
+_headers = ""
+
+def setAuth(api_base_url: str, token: str):
+	global _api_url, _headers
+	_api_url = api_base_url
+	TOKEN = b64encode(bytes(token, "utf-8")).decode("utf-8")
+	_headers = {"Authorization": f"Token {TOKEN}", "Content-Type": "application/json", "Accept": "application/json"}
+
+def getAuth():
+	return _api_url, _headers
