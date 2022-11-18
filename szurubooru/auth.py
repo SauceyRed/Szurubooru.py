@@ -17,14 +17,30 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from base64 import b64encode
 
-_api_url = ""
-_headers = ""
+_base_url, _api_endpoint, _api_base_url, _TOKEN, _headers = "", "", "", "", ""
 
-def setAuth(api_base_url: str, token: str):
-	global _api_url, _headers
-	_api_url = api_base_url
-	TOKEN = b64encode(bytes(token, "utf-8")).decode("utf-8")
-	_headers = {"Authorization": f"Token {TOKEN}", "Content-Type": "application/json", "Accept": "application/json"}
+def setAuth(base_url: str, api_endpoint: str, token: str):
+	global _base_url, _api_endpoint, _api_base_url, _TOKEN, _headers
+	_base_url = base_url
+	_api_endpoint = api_endpoint
+	_api_base_url = _base_url.strip("/") + "/" + _api_endpoint.strip("/")
+	_TOKEN = b64encode(bytes(token, "utf-8")).decode("utf-8")
+	_headers = {"Authorization": f"Token {_TOKEN}", "Content-Type": "application/json", "Accept": "application/json"}
+
+def getBaseUrl():
+	return _base_url
+
+def getApiEndpoint():
+	return _api_endpoint
+
+def getApiBaseUrl():
+	return _api_base_url
+
+def getHeaders():
+	return _headers
+
+def getToken():
+	return _TOKEN
 
 def getAuth():
-	return _api_url, _headers
+	return _api_base_url, _headers

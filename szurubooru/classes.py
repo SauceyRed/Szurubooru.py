@@ -249,6 +249,9 @@ class Post:
 		post_r.raise_for_status()
 		return print(f"Featured post with ID {self.id}")
 
+	def contentFullUrl(self):
+		return getBaseUrl() + "/" + self.content_url
+
 class MicroPost:
 	def __init__(self, name, thumbnail_url):
 		self.name = name
