@@ -201,6 +201,12 @@ class Post:
 		next_post = post_r_json["next"]
 		return next_post
 
+	def getContentFullUrl(self):
+		return getBaseUrl() + "/" + self.content_url
+
+	def getThumbnailFullUrl(self):
+		return getBaseUrl() + "/" + self.thumbnail_url
+
 	def delete(self):
 		post_r = requests.delete(API_URL + f"/post/{self.id}", json={"version": self.version}, headers=HEADERS)
 		post_r_json = post_r.json()
@@ -248,9 +254,6 @@ class Post:
 		post_r = requests.post(API_URL + f"/featured-post", json={"id": self.id}, headers=HEADERS)
 		post_r.raise_for_status()
 		return print(f"Featured post with ID {self.id}")
-
-	def contentFullUrl(self):
-		return getBaseUrl() + "/" + self.content_url
 
 class MicroPost:
 	def __init__(self, name, thumbnail_url):
